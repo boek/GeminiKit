@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct GeminiRequest {
+public struct GeminiRequest: Sendable {
     public var url: URL
     
     public init(url: URL) {
@@ -15,7 +15,7 @@ public struct GeminiRequest {
     }
 }
 
-public enum GeminiStatus: Int {
+public enum GeminiStatus: Int, Sendable {
     case success            = 20
     case redirect           = 30
     case redirectPermanent  = 31
@@ -24,7 +24,7 @@ public enum GeminiStatus: Int {
     case serverError        = 50
 }
 
-public struct GeminiResponse {
+public struct GeminiResponse: Sendable {
     public var status: GeminiStatus
     public var meta: String
     public var body: Data?
