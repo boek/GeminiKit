@@ -27,12 +27,14 @@ struct GeminiServer {
             .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
             .childChannelInitializer { channel in
                 // This closure runs once per accepted connection
-                channel.pipeline.addHandlers([
+                print("🔌 New connection from \(channel.remoteAddress?.description ?? "unknown")")
+                return channel.pipeline.addHandlers([
                     NIOSSLServerHandler(context: sslContext),   // 1. TLS unwrap
                     ByteToMessageHandler(GeminiLineDecoder()),  // 2. Buffer → line bytes
                     GeminiRequestDecoder(),                     // 3. Line bytes → GeminiRequest
+                    GeminiResponseEncoder(),
                     GeminiHandler(),                            // 4. Request → Response (your logic)
-                    GeminiResponseEncoder(),                    // 5. Response → bytes
+                                        // 5. Response → bytes
                 ])
             }
 

@@ -21,7 +21,11 @@ public final class GeminiRequestDecoder: ChannelInboundHandler, RemovableChannel
     
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         var buf = unwrapInboundIn(data)
-        guard let line = buf.readString(length: buf.readableBytes) else { return }
+        guard let line = buf.readString(length: buf.readableBytes) else {
+            print("❌ Decoder: couldn't read string from buffer")
+            return
+        }
+        print("📥 Decoder received: \(line.debugDescription)")
         buffer += line
         
         guard buffer.hasSuffix("\r\n") else { return }
@@ -60,6 +64,7 @@ public final class GeminiResponseEncoder: ChannelOutboundHandler {
             let byteBuffer = ByteBufferAllocator().buffer(bytes: body)
             buffer.writeImmutableBuffer(byteBuffer)
         }
+        context.write(wrapOutboundOut(buffer), promise: promise)
     }
 }
 
@@ -71,11 +76,19 @@ public final class GeminiHandler: ChannelInboundHandler {
     
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         let request = unwrapInboundIn(data)
+        print("📨 Handler received request for: \(request.url)")
         let response = handle(request: request, allocator: context.channel.allocator)
+        print("📤 Handler sending response: \(response.status) \(response.meta)")
         
-        context.writeAndFlush(NIOAny(response)).whenComplete { _ in
+        context.channel.writeAndFlush(response).whenComplete { result in
+            print("✅ Write complete: \(result)")
             context.close(promise: nil)
         }
+    }
+    
+    public func errorCaught(context: ChannelHandlerContext, error: any Error) {
+        print("💥 Error: \(error)")
+        context.close(promise: nil)
     }
     
     private func handle(
