@@ -11,9 +11,11 @@ import NIOSSL
 
 import Core
 
+import Foundation
+
 struct NIOServer {
-    func start(config: GeminiServer.Config, handler: GeminiHandler) async throws {
-        let tlsConfig  = try makeTLSConfiguration(certificate: config.certificate)
+    func start(config: Config, handler: @escaping GeminiHandler) async throws {
+        let tlsConfig  = try makeTLSConfiguration(config: config)
         let sslContext = try NIOSSLContext(configuration: tlsConfig)
 
         let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
@@ -40,7 +42,7 @@ struct NIOServer {
                         do {
                             try await connectionChannel.executeThenClose { inbound, outbound in
                                 for try await message in inbound {
-                                    let response = try await handler.handle(message) ?? GeminiResponse(status: .notFound, meta: "")
+                                    let response = await handler(message) ?? GeminiResponse(status: .notFound, meta: "")
                                     try await outbound.write(response)
                                     return
                                 }
@@ -54,9 +56,12 @@ struct NIOServer {
         }
     }
     
-    func makeTLSConfiguration(certificate: Certificate) throws -> TLSConfiguration {
-        let cert = try NIOSSLCertificate(bytes: Array(certificate.cert), format: .pem)
-        let key  = try NIOSSLPrivateKey(bytes: Array(certificate.key), format: .pem)
+    func makeTLSConfiguration(config: Config) throws -> TLSConfiguration {
+        let certData = try Data(contentsOf: config.certPath.appending(path: "cert.pem"))
+        let keyData = try Data(contentsOf: config.certPath.appending(path: "key.pem"))
+        
+        let cert = try NIOSSLCertificate(bytes: Array(certData), format: .pem)
+        let key  = try NIOSSLPrivateKey(bytes: Array(keyData), format: .pem)
 
         var config = TLSConfiguration.makeServerConfiguration(
             certificateChain: [.certificate(cert)],
@@ -68,11 +73,9 @@ struct NIOServer {
     }
 }
 
-public extension GeminiServer {
-    static var nio: Self {
-        .init { config, handler in
-            try await NIOServer().start(config: config, handler: handler)
-        }
+public extension Server {
+    func serve() async throws {
+        try await NIOServer().start(config: config, handler: handler)
     }
 }
 

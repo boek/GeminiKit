@@ -21,6 +21,7 @@ let package = Package(
             "Core",
             "LibNetworking"
         ]),
+        .testTarget(name: "GeminiServerTests", dependencies: ["GeminiServer"]),
         
         .executableTarget(name: "ExampleServer", dependencies: [
             "GeminiServer"

@@ -11,30 +11,20 @@ import LibNetworking
 import Foundation
 import NIOCore
 
-public struct GeminiServer {
-    var start: (Config, GeminiHandler) async throws -> Void
+public struct Config {
+    public var certPath: URL
     
-    public func start(config: Config, handler: GeminiHandler) async throws {
-        try await self.start(config, handler)
+    public init(certPath: URL) {
+        self.certPath = certPath
     }
 }
 
-public struct Certificate {
-    public var key: Data
-    public var cert: Data
+public struct Server {
+    public var config: Config
+    public var handler: GeminiHandler
     
-    public init(key: Data, cert: Data) {
-        self.key = key
-        self.cert = cert
-    }
-}
-
-public extension GeminiServer {
-    struct Config {
-        public var certificate: Certificate
-        
-        public init(certificate: Certificate) {
-            self.certificate = certificate
-        }
+    public init(config: Config, handler: @escaping GeminiHandler) {
+        self.config = config
+        self.handler = handler
     }
 }
