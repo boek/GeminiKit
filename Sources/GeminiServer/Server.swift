@@ -11,18 +11,6 @@ import LibNetworking
 import Foundation
 import NIOCore
 
-public struct GeminiHandler: Sendable {
-    var handle: @Sendable (GeminiRequest) async throws -> GeminiResponse
-    
-    public init(handle: @Sendable @escaping (GeminiRequest) async throws -> GeminiResponse) {
-        self.handle = handle
-    }
-    
-    public func callAsFunction(_ request: GeminiRequest) async throws -> GeminiResponse {
-        try await handle(request)
-    }
-}
-
 public struct GeminiServer {
     var start: (Config, GeminiHandler) async throws -> Void
     

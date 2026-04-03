@@ -40,7 +40,7 @@ struct NIOServer {
                         do {
                             try await connectionChannel.executeThenClose { inbound, outbound in
                                 for try await message in inbound {
-                                    let response = try await handler.handle(message)
+                                    let response = try await handler.handle(message) ?? GeminiResponse(status: .notFound, meta: "")
                                     try await outbound.write(response)
                                     return
                                 }
