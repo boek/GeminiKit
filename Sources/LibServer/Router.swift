@@ -37,11 +37,35 @@ struct RootRoute: Route, HandlerConvertable {
     var body: Never { return fatalError() }
 }
 
+struct IfRoute: Route, HandlerConvertable {
+    typealias Body = Never
+
+    var handler: Handler
+
+    init(route: (any Route)?) {
+        self.handler = route?.handler ?? Handler { _ in nil }
+    }
+
+    var body: Never { return fatalError() }
+}
+
 
 @resultBuilder
 public enum RouteBuilder {
     public static func buildBlock(_ components: any Route...) -> some Route {
         RootRoute(handlers: components.map(\.handler))
+    }
+
+    public static func buildOptional(_ component: (any Route)?) -> some Route {
+        IfRoute(route: component)
+    }
+
+    public static func buildEither(first component: some Route) -> some Route {
+        component
+    }
+
+    public static func buildEither(second component: some Route) -> some Route {
+        component
     }
 }
 
@@ -64,6 +88,57 @@ extension Input: HandlerConvertable {
     var handler: Handler {
         .input(prompt) { response in
             return child(response).handler
+        }
+    }
+}
+@dynamicMemberLookup
+public struct Parameters: Sendable {
+    let parameters: [String: String]
+
+    init(path: String, compared: String) {
+        let templateParts = path.split(separator: "/", omittingEmptySubsequences: false)
+        let actualParts = compared.split(separator: "/", omittingEmptySubsequences: false)
+
+        guard templateParts.count == actualParts.count else {
+            parameters = [:]
+            return
+        }
+
+        parameters = zip(templateParts, actualParts)
+            .reduce(into: [:]) { result, pair in
+                let (template, actual) = pair
+                if template.hasPrefix(":") {
+                    let key = String(template.dropFirst())
+                    result[key] = String(actual)
+                }
+            }
+    }
+
+    public subscript(dynamicMember member: String) -> String? {
+        parameters[member]
+    }
+}
+
+public struct Match<Child: Route>: Route {
+    public typealias Body = Never
+    public var body: Never { return fatalError() }
+
+    let path: String
+    let child: @Sendable (Parameters) -> Child
+
+    public init(
+        _ path: String,
+        @RouteBuilder child: @Sendable @escaping (Parameters) -> Child
+    ) {
+        self.path = path
+        self.child = child
+    }
+}
+
+extension Match: HandlerConvertable {
+    var handler: Handler {
+        return .match(path) { params in
+            child(params).handler
         }
     }
 }

@@ -35,6 +35,24 @@ extension Handler {
         return Handler { _ in .success(content) }
     }
 
+    static func match(_ path: String, next: @Sendable @escaping (Parameters) -> Handler) -> Handler {
+        return Handler { request in
+            let templateParts = path.split(separator: "/", omittingEmptySubsequences: false)
+            let actualParts = request.path.split(separator: "/", omittingEmptySubsequences: false)
+
+            guard templateParts.count == actualParts.count else { return nil }
+
+            let matches = zip(templateParts, actualParts).allSatisfy { template, actual in
+                template.hasPrefix(":") || template == actual
+            }
+
+            guard matches else { return nil }
+
+            let params = Parameters(path: path, compared: request.path)
+            return await next(params).handle(request: request)
+        }
+    }
+
     static func path(_ path: String, next: Handler) -> Handler {
         return Handler { request in
             guard path == request.path else { return nil }

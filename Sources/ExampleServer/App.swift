@@ -24,6 +24,11 @@ struct ExampleServer: Server {
     var body: some Route {
         Path("/") { Success("Home") }
         Path("/about") { Success("About") }
+        Match("/users/:id") { params in
+            if let id = params.id {
+                Success("Hello \(id)!")
+            }
+        }
         Ask()
     }
 }
