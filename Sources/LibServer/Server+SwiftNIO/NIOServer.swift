@@ -14,7 +14,7 @@ import Core
 import Foundation
 
 struct NIOServer {
-    func start(config: Config, handler: @escaping GeminiHandler) async throws {
+    func start(config: Config, handler: Handler) async throws {
         let tlsConfig  = try makeTLSConfiguration(config: config)
         let sslContext = try NIOSSLContext(configuration: tlsConfig)
 
@@ -42,7 +42,7 @@ struct NIOServer {
                         do {
                             try await connectionChannel.executeThenClose { inbound, outbound in
                                 for try await message in inbound {
-                                    let response = await handler(message) ?? GeminiResponse(status: .notFound, meta: "")
+                                    let response = await handler.handle(message) ?? GeminiResponse(status: .notFound, meta: "")
                                     try await outbound.write(response)
                                     return
                                 }
@@ -59,7 +59,7 @@ struct NIOServer {
     func makeTLSConfiguration(config: Config) throws -> TLSConfiguration {
         let certData = try Data(contentsOf: config.certificatePath)
         let keyData = try Data(contentsOf: config.privateKeyPath)
-        
+
         let cert = try NIOSSLCertificate(bytes: Array(certData), format: .pem)
         let key  = try NIOSSLPrivateKey(bytes: Array(keyData), format: .pem)
 
@@ -72,10 +72,3 @@ struct NIOServer {
         return config
     }
 }
-
-public extension Server {
-    func serve() async throws {
-        try await NIOServer().start(config: config, handler: handler)
-    }
-}
-

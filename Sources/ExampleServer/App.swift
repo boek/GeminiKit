@@ -15,18 +15,14 @@ enum AppError: Error {
 }
 
 @main
-struct ExampleApp {
-    static func main() async throws {
-        guard let certPath = Bundle.module.url(forResource: "cert", withExtension: "pem"),
-              let keyPath = Bundle.module.url(forResource: "key", withExtension: "pem")
-        else {
-            throw AppError.missingCerts
-        }
+struct ExampleServer: Server {
+    let config = Config(
+        certificatePath: Bundle.module.url(forResource: "cert", withExtension: "pem")!,
+        privateKeyPath: Bundle.module.url(forResource: "key", withExtension: "pem")!
+    )
 
-        let config = Config(certificatePath: certPath, privateKeyPath: keyPath)
-        let server = Server(config: config) { request in
-            .success("Hello World!")
-        }
-        try await server.serve()
+    var body: some Route {
+        Path("/") { Success("Home") }
+        Path("/about") { Success("About") }
     }
 }

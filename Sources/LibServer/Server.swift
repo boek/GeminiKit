@@ -16,28 +16,37 @@ public struct Config {
     public var host: String
     public var port: Int
     public var numberOfThreads: Int
+    public var requestTimeout: Duration
 
     public init(
         certificatePath: URL,
         privateKeyPath: URL,
         host: String = "0.0.0.0",
         port: Int = 1965,
-        numberOfThreads: Int = System.coreCount
+        numberOfThreads: Int = System.coreCount,
+        requestTimeout: Duration = .seconds(30),
     ) {
         self.certificatePath = certificatePath
         self.privateKeyPath = privateKeyPath
         self.host = host
         self.port = port
         self.numberOfThreads = numberOfThreads
+        self.requestTimeout = requestTimeout
     }
 }
 
-public struct Server {
-    public var config: Config
-    public var handler: GeminiHandler
-    
-    public init(config: Config, handler: @escaping GeminiHandler) {
-        self.config = config
-        self.handler = handler
+public protocol Server {
+    associatedtype Body: Route
+    var config: Config { get }
+
+    @RouteBuilder var body: Body { get }
+
+    init()
+}
+
+public extension Server {
+    static func main() async throws {
+        let server = Self()
+        try await NIOServer().start(config: server.config, handler: server.body.handler)
     }
 }

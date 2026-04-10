@@ -8,29 +8,40 @@
 import Core
 import Foundation
 
-public typealias GeminiHandler = @Sendable (GeminiRequest) async -> GeminiResponse?
-
-enum Handler {
-    
+protocol HandlerConvertable {
+    var handler: Handler { get }
 }
 
-func path(
-    _ path: String,
-    _ handler: @escaping @Sendable () -> GeminiHandler
-) -> GeminiHandler {
-    return { request in
-        guard request.path == path else { return nil }
-        return await handler()(request)
+struct Handler {
+    var handle: @Sendable (GeminiRequest) async -> GeminiResponse?
+
+    func handle(request: GeminiRequest) async -> GeminiResponse? {
+        await handle(request)
     }
 }
 
-public func prefix(
-    _ prefix: String,
-    _ handler: @escaping @Sendable () -> GeminiHandler
-) -> GeminiHandler {
-    return { request in
-        guard request.path.hasPrefix(prefix) else { return nil }
-        return await handler()(request)
+extension Handler {
+    static func success(_ content: String) -> Handler {
+        return Handler { _ in .success(content) }
+    }
+
+    static func path(_ path: String, next: Handler) -> Handler {
+        return Handler { request in
+            guard path == request.path else { return nil }
+            return await next.handle(request)
+        }
+    }
+
+    static func choose(_ handlers: [Handler]) -> Handler {
+        return Handler { request in
+            for handler in handlers {
+                if let response = await handler.handle(request: request) {
+                    return response
+                }
+            }
+
+            return nil
+        }
     }
 }
 
