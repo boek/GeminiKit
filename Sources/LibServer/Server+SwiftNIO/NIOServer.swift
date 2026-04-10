@@ -24,7 +24,7 @@ struct NIOServer {
             // SO_REUSEADDR lets you restart the server without waiting for the OS to release the port
             .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
         
-        let serverChannel = try await bootstrap.bind(host: "0.0.0.0", port: 1965) { channel in
+        let serverChannel = try await bootstrap.bind(host: config.host, port: config.port) { channel in
             channel.eventLoop.makeCompletedFuture {
                 try channel.pipeline.syncOperations.addHandlers(NIOSSLServerHandler(context: sslContext))
                 try channel.pipeline.syncOperations.addHandlers(ByteToMessageHandler(GeminiLineDecoder()))
@@ -57,8 +57,8 @@ struct NIOServer {
     }
     
     func makeTLSConfiguration(config: Config) throws -> TLSConfiguration {
-        let certData = try Data(contentsOf: config.certPath.appending(path: "cert.pem"))
-        let keyData = try Data(contentsOf: config.certPath.appending(path: "key.pem"))
+        let certData = try Data(contentsOf: config.certificatePath)
+        let keyData = try Data(contentsOf: config.privateKeyPath)
         
         let cert = try NIOSSLCertificate(bytes: Array(certData), format: .pem)
         let key  = try NIOSSLPrivateKey(bytes: Array(keyData), format: .pem)

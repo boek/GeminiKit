@@ -18,14 +18,6 @@ final class GeminiResponseEncoder: ChannelOutboundHandler {
     
     public func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
         let response = self.unwrapOutboundIn(data)
-        var buffer = context.channel.allocator.buffer(capacity: 256)
-        
-        buffer.writeString("\(response.status.rawValue) \(response.meta)\r\n")
-        
-        if let body = response.body {
-            let byteBuffer = ByteBufferAllocator().buffer(bytes: body)
-            buffer.writeImmutableBuffer(byteBuffer)
-        }
-        context.write(wrapOutboundOut(buffer), promise: promise)
+        context.write(response: response, promise: promise)
     }
 }

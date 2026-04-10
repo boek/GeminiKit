@@ -10,9 +10,13 @@ import Foundation
 
 public typealias GeminiHandler = @Sendable (GeminiRequest) async -> GeminiResponse?
 
+enum Handler {
+    
+}
+
 func path(
     _ path: String,
-    @HandlerBuilder _ handler: @escaping @Sendable () -> GeminiHandler
+    _ handler: @escaping @Sendable () -> GeminiHandler
 ) -> GeminiHandler {
     return { request in
         guard request.path == path else { return nil }
@@ -22,7 +26,7 @@ func path(
 
 public func prefix(
     _ prefix: String,
-    @HandlerBuilder _ handler: @escaping @Sendable () -> GeminiHandler
+    _ handler: @escaping @Sendable () -> GeminiHandler
 ) -> GeminiHandler {
     return { request in
         guard request.path.hasPrefix(prefix) else { return nil }
@@ -68,30 +72,3 @@ public extension GeminiResponse {
     }
 }
 
-@resultBuilder
-public struct HandlerBuilder {
-
-    // Single handler passthrough
-    public static func buildBlock(_ handler: @escaping GeminiHandler) -> GeminiHandler {
-        handler
-    }
-
-    // Multiple handlers — try each in order, return first non-nil
-    public static func buildBlock(_ handlers: GeminiHandler...) -> GeminiHandler {
-        { request in
-            for handler in handlers {
-                if let response = await handler(request) { return response }
-            }
-            return nil
-        }
-    }
-
-    // if / guard support
-    public static func buildOptional(_ handler: GeminiHandler?) -> GeminiHandler {
-        handler ?? { _ in nil }
-    }
-
-    // if/else support
-    public static func buildEither(first handler: @escaping GeminiHandler) -> GeminiHandler { handler }
-    public static func buildEither(second handler: @escaping GeminiHandler) -> GeminiHandler { handler }
-}

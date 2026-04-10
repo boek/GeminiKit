@@ -25,14 +25,24 @@ public struct GeminiRequest: Sendable {
 }
 
 public enum GeminiStatus: Int, Sendable {
-    case input              = 10
-    case sensitiveInput     = 11
-    case success            = 20
-    case redirect           = 30
-    case redirectPermanent  = 31
-    case temporaryFailure   = 40
-    case serverError        = 50
-    case notFound           = 51
+    case input                   = 10
+    case sensitiveInput          = 11
+    case success                 = 20
+    case redirect                = 30
+    case redirectPermanent       = 31
+    case temporaryFailure        = 40
+    case serverUnavailable       = 41
+    case cgiError                = 42
+    case proxyError              = 43
+    case slowDown                = 44
+    case serverError             = 50
+    case notFound                = 51
+    case gone                    = 52
+    case proxyRejected           = 53
+    case badRequest              = 59
+    case certificateRequired     = 60
+    case certificateUnauthorized = 61
+    case certificateNotValid     = 62
 }
 
 public struct GeminiResponse: Sendable {

@@ -7,14 +7,25 @@
 
 import Foundation
 
-import GeminiServer
+import Core
+import LibServer
+
+enum AppError: Error {
+    case missingCerts
+}
 
 @main
 struct ExampleApp {
     static func main() async throws {
-        let config = Config(certPath: Bundle.module.resourceURL!)
+        guard let certPath = Bundle.module.url(forResource: "cert", withExtension: "pem"),
+              let keyPath = Bundle.module.url(forResource: "key", withExtension: "pem")
+        else {
+            throw AppError.missingCerts
+        }
+
+        let config = Config(certificatePath: certPath, privateKeyPath: keyPath)
         let server = Server(config: config) { request in
-                .success("Hello World!")
+            .success("Hello World!")
         }
         try await server.serve()
     }

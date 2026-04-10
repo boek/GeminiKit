@@ -13,7 +13,7 @@ import Core
 final class GeminiRequestDecoder: ChannelInboundHandler, RemovableChannelHandler {
     public typealias InboundIn = ByteBuffer
     public typealias InboundOut = GeminiRequest
-    
+
     private var buffer = ""
     
     public init() {}
@@ -21,10 +21,9 @@ final class GeminiRequestDecoder: ChannelInboundHandler, RemovableChannelHandler
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         var buf = unwrapInboundIn(data)
         guard let line = buf.readString(length: buf.readableBytes) else {
-            print("❌ Decoder: couldn't read string from buffer")
             return
         }
-        print("📥 Decoder received: \(line.debugDescription)")
+
         buffer += line
         
         guard buffer.hasSuffix("\r\n") else { return }
@@ -38,10 +37,10 @@ final class GeminiRequestDecoder: ChannelInboundHandler, RemovableChannelHandler
             url.scheme?.lowercased() == "gemini"
         else {
             let response = GeminiResponse(status: .temporaryFailure, meta: "Bad request")
-            context.fireChannelRead(wrapInboundOut(GeminiRequest(url: URL(string: "gemini://invalid")!)))
+            context.write(response: response)
             return
         }
-        
+
         context.fireChannelRead(wrapInboundOut(GeminiRequest(url: url)))
     }
 }
