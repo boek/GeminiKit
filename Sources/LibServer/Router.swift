@@ -5,7 +5,7 @@
 //  Created by Jeff Boek on 4/9/26.
 //
 
-public protocol Route {
+public protocol Route: Sendable {
     associatedtype Body: Route
 
     @RouteBuilder var body: Body { get }
@@ -43,13 +43,28 @@ public enum RouteBuilder {
     public static func buildBlock(_ components: any Route...) -> some Route {
         RootRoute(handlers: components.map(\.handler))
     }
+}
 
-    public static func buildPartialBlock(first: any Route) -> some Route {
-        RootRoute(handlers: [first.handler])
+public struct Input<Child: Route>: Route {
+    public typealias Body = Never
+    public var body: Never { return fatalError() }
+
+    let prompt: String
+    let child: @Sendable (String) -> Child
+
+    public init(
+        _ prompt: String,
+        @RouteBuilder child: @Sendable @escaping (String) -> Child) {
+        self.prompt = prompt
+        self.child = child
     }
+}
 
-    public static func buildPartialBlock(accumulated: any Route, next: any Route) -> some Route {
-        RootRoute(handlers: [accumulated.handler, next.handler])
+extension Input: HandlerConvertable {
+    var handler: Handler {
+        .input(prompt) { response in
+            return child(response).handler
+        }
     }
 }
 

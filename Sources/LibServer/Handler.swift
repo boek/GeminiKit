@@ -21,6 +21,16 @@ struct Handler {
 }
 
 extension Handler {
+    static func input(_ prompt: String, next: @Sendable @escaping (String) -> Handler) -> Handler {
+        return Handler { request in
+            guard let response = request.query else {
+                return .input(prompt)
+            }
+
+            return await next(response).handle(request: request)
+        }
+    }
+
     static func success(_ content: String) -> Handler {
         return Handler { _ in .success(content) }
     }

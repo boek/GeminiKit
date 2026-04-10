@@ -24,5 +24,17 @@ struct ExampleServer: Server {
     var body: some Route {
         Path("/") { Success("Home") }
         Path("/about") { Success("About") }
+        Ask()
+    }
+}
+
+
+struct Ask: Route {
+    var body: some Route {
+        Path("/ask") {
+            Input("How are you?") { response in
+                Success("I'm happy you're \(response)")
+            }
+        }
     }
 }
