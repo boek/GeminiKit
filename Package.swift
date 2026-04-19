@@ -9,6 +9,7 @@ let package = Package(
     products: [
         .library(name: "LibServer", targets: ["LibServer"]),
         .library(name: "LibClient", targets: ["LibClient"]),
+        .executable(name: "ExampleClient", targets: ["ExampleClient"]),
         .executable(name: "ExampleServer", targets: ["ExampleServer"])
     ],
     dependencies: [ 
@@ -33,6 +34,8 @@ let package = Package(
             .product(name: "NIOSSL", package: "swift-nio-ssl"),
         ]),
         .testTarget(name: "LibClientTests", dependencies: ["LibClient"]),
+
+        .executableTarget(name: "ExampleClient", dependencies: ["LibClient"]),
 
         .executableTarget(name: "ExampleServer", dependencies: [
             "LibServer"
