@@ -8,6 +8,7 @@ let package = Package(
     platforms: [.macOS(.v26)],
     products: [
         .library(name: "LibServer", targets: ["LibServer"]),
+        .library(name: "LibClient", targets: ["LibClient"]),
         .executable(name: "ExampleServer", targets: ["ExampleServer"])
     ],
     dependencies: [ 
@@ -24,6 +25,14 @@ let package = Package(
             .product(name: "NIOSSL", package: "swift-nio-ssl"),
         ]),
         .testTarget(name: "LibServerTests", dependencies: ["LibServer"]),
+
+        .target(name: "LibClient", dependencies: [
+            "Core",
+            .product(name: "NIOCore", package: "swift-nio"),
+            .product(name: "NIOPosix", package: "swift-nio"),
+            .product(name: "NIOSSL", package: "swift-nio-ssl"),
+        ]),
+        .testTarget(name: "LibClientTests", dependencies: ["LibClient"]),
 
         .executableTarget(name: "ExampleServer", dependencies: [
             "LibServer"
