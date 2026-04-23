@@ -5,10 +5,7 @@
 //  Created by Jeff Boek on 4/1/26.
 //
 
-import Foundation
-
-import Core
-import LibServer
+import GeminiKit
 
 enum AppError: Error {
     case missingCerts

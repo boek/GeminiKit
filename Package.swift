@@ -7,9 +7,7 @@ let package = Package(
     name: "GeminiKit",
     platforms: [.macOS(.v26)],
     products: [
-        .library(name: "LibServer", targets: ["LibServer"]),
-        .library(name: "LibClient", targets: ["LibClient"]),
-        .library(name: "LibGemText", targets: ["LibGemText"]),
+        .library(name: "GeminiKit", targets: ["GeminiKit"]),
         .executable(name: "ExampleClient", targets: ["ExampleClient"]),
         .executable(name: "ExampleServer", targets: ["ExampleServer"])
     ],
@@ -39,10 +37,17 @@ let package = Package(
         .target(name: "LibGemText"),
         .testTarget(name: "LibGemTextTests", dependencies: ["LibGemText"]),
 
-        .executableTarget(name: "ExampleClient", dependencies: ["LibClient"]),
+        .target(name: "GeminiKit", dependencies: [
+            "Core",
+            "LibClient",
+            "LibGemText",
+            "LibServer",
+        ]),
+
+        .executableTarget(name: "ExampleClient", dependencies: ["GeminiKit"]),
 
         .executableTarget(name: "ExampleServer", dependencies: [
-            "LibServer"
+            "GeminiKit"
         ], resources: [
             .process("cert.pem"),
             .process("key.pem"),

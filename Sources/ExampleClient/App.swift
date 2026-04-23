@@ -1,5 +1,4 @@
-import Foundation
-import LibClient
+import GeminiKit
 
 @main struct App {
     static func main() async throws {

@@ -1,5 +1,6 @@
 import Foundation
 import Core
+import Foundation
 
 public struct GeminiClient: Sendable {
     public var allowSelfSignedCertificates: Bool
