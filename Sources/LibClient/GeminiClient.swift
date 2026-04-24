@@ -1,12 +1,11 @@
-import Foundation
 import Core
 import Foundation
 
 public struct GeminiClient: Sendable {
-    public var allowSelfSignedCertificates: Bool
+    public var certificateVerification: CertificateVerifier?
 
-    public init(allowSelfSignedCertificates: Bool = false) {
-        self.allowSelfSignedCertificates = allowSelfSignedCertificates
+    public init(certificateVerification: CertificateVerifier? = nil) {
+        self.certificateVerification = certificateVerification
     }
 
     public func fetch(_ url: URL) async throws -> GeminiResponse {
@@ -20,7 +19,7 @@ public struct GeminiClient: Sendable {
         return try await NIOGeminiClient.fetch(
             url: url,
             request: requestString,
-            allowSelfSignedCertificates: allowSelfSignedCertificates
+            certificateVerification: certificateVerification
         )
     }
 }

@@ -2,7 +2,7 @@ import GeminiKit
 
 @main struct App {
     static func main() async throws {
-        let client = GeminiClient(allowSelfSignedCertificates: true)
+        let client = GeminiClient(certificateVerification: .allowAll)
         let url = URL(string: "gemini://geminiprotocol.net/")!
         let response = try await client.fetch(url)
 
