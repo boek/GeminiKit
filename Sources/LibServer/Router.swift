@@ -5,6 +5,8 @@
 //  Created by Jeff Boek on 4/9/26.
 //
 
+import Core
+
 public protocol Route: Sendable {
     associatedtype Body: Route
 
@@ -271,6 +273,61 @@ public struct BadRequest: Route, HandlerConvertable {
     public var body: Never { return fatalError() }
 
     public init(_ reason: String = "Bad request") { self.reason = reason }
+}
+
+public struct CertificateRequired: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .certificateRequired(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Certificate required") { self.reason = reason }
+}
+
+public struct CertificateUnauthorized: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .certificateUnauthorized(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Certificate not authorised") { self.reason = reason }
+}
+
+public struct CertificateNotValid: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .certificateNotValid(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Certificate not valid") { self.reason = reason }
+}
+
+public struct RequiresCertificate<Child: Route>: Route {
+    public typealias Body = Never
+    public var body: Never { return fatalError() }
+
+    let reason: String
+    let child: @Sendable (ClientCertificate) -> Child
+
+    public init(
+        _ reason: String = "Certificate required",
+        @RouteBuilder child: @Sendable @escaping (ClientCertificate) -> Child
+    ) {
+        self.reason = reason
+        self.child = child
+    }
+}
+
+extension RequiresCertificate: HandlerConvertable {
+    var handler: Handler {
+        let reason = self.reason
+        return Handler { request in
+            guard let cert = request.clientCertificate else {
+                return .certificateRequired(reason)
+            }
+            return await child(cert).handler.handle(request: request)
+        }
+    }
 }
 
 extension Path: HandlerConvertable {

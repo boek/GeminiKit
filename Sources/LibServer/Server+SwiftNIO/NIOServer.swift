@@ -26,7 +26,12 @@ struct NIOServer {
         
         let serverChannel = try await bootstrap.bind(host: config.host, port: config.port) { channel in
             channel.eventLoop.makeCompletedFuture {
-                try channel.pipeline.syncOperations.addHandlers(NIOSSLServerHandler(context: sslContext))
+                // Accept any client cert without chain verification — Gemini uses fingerprint-based TOFU
+                try channel.pipeline.syncOperations.addHandlers(
+                    NIOSSLServerHandler(context: sslContext, customVerificationCallback: { _, promise in
+                        promise.succeed(.certificateVerified)
+                    })
+                )
                 try channel.pipeline.syncOperations.addHandlers(ByteToMessageHandler(GeminiLineDecoder()))
                 try channel.pipeline.syncOperations.addHandlers(GeminiRequestDecoder())
                 try channel.pipeline.syncOperations.addHandlers(GeminiResponseEncoder())
@@ -69,6 +74,8 @@ struct NIOServer {
         )
         // Gemini requires TLS 1.2+; 1.3 is preferred
         config.minimumTLSVersion = .tlsv12
+        // Request client certs but don't require them — handlers use status 60 to demand one
+        config.certificateVerification = .optionalVerification
         return config
     }
 }

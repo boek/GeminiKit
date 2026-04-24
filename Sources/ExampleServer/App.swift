@@ -15,6 +15,12 @@ private let indexPage = """
     => /test/not-found          51 Not Found
     => /test/gone               52 Gone
     => /test/bad-request        59 Bad Request
+
+    ## Client Certificates
+    => /test/cert/required      60 Certificate Required (no cert)
+    => /test/cert/unauthorized  61 Certificate Not Authorised
+    => /test/cert/not-valid     62 Certificate Not Valid
+    => /test/cert/inspect       Inspect your certificate (requires cert)
     """
 
 @main
@@ -72,6 +78,25 @@ struct ExampleServer: Server {
         }
         Path("/test/bad-request") {
             BadRequest()
+        }
+
+        Path("/test/cert/required") {
+            CertificateRequired()
+        }
+        Path("/test/cert/unauthorized") {
+            CertificateUnauthorized()
+        }
+        Path("/test/cert/not-valid") {
+            CertificateNotValid()
+        }
+        Path("/test/cert/inspect") {
+            RequiresCertificate { cert in
+                Success("""
+                    # Your Certificate
+                    Fingerprint: \(cert.fingerprint)
+                    Expires: \(cert.notAfter)
+                    """)
+            }
         }
     }
 }

@@ -19,8 +19,12 @@ public struct GeminiRequest: Sendable {
     // Convenience — was input provided?
     public var hasInput: Bool { url.query != nil }
 
-    public init(url: URL) {
+    // Client certificate presented during TLS handshake, if any
+    public var clientCertificate: ClientCertificate?
+
+    public init(url: URL, clientCertificate: ClientCertificate? = nil) {
         self.url = url
+        self.clientCertificate = clientCertificate
     }
 }
 

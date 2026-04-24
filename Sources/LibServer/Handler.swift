@@ -8,6 +8,14 @@
 import Core
 import Foundation
 
+struct NextHandler<T> {
+    var next: @Sendable (T) -> Handler
+
+    func callAsFunction(_ input: T) -> Handler {
+        next(input)
+    }
+}
+
 protocol HandlerConvertable {
     var handler: Handler { get }
 }
@@ -21,7 +29,10 @@ struct Handler {
 }
 
 extension Handler {
-    static func input(_ prompt: String, next: @Sendable @escaping (String) -> Handler) -> Handler {
+    static func input(
+        _ prompt: String,
+        next: NextHandler<String>
+    ) -> Handler {
         return Handler { request in
             guard let response = request.query else {
                 return .input(prompt)
@@ -31,7 +42,10 @@ extension Handler {
         }
     }
 
-    static func sensitiveInput(_ prompt: String, next: @Sendable @escaping (String) -> Handler) -> Handler {
+    static func sensitiveInput(
+        _ prompt: String,
+        next: NextHandler<String>
+    ) -> Handler {
         return Handler { request in
             guard let response = request.query else {
                 return .sensitiveInput(prompt)
@@ -45,7 +59,10 @@ extension Handler {
         return Handler { _ in .success(content) }
     }
 
-    static func match(_ path: String, next: @Sendable @escaping (Parameters) -> Handler) -> Handler {
+    static func match(
+        _ path: String,
+        next: NextHandler<Parameters>
+    ) -> Handler {
         return Handler { request in
             let templateParts = path.split(separator: "/", omittingEmptySubsequences: false)
             let actualParts = request.path.split(separator: "/", omittingEmptySubsequences: false)
@@ -85,7 +102,10 @@ extension Handler {
 
 public extension GeminiResponse {
     // 20 Success
-    static func success(_ body: String, mimeType: String = "text/gemini; charset=utf-8") -> GeminiResponse {
+    static func success(
+        _ body: String,
+        mimeType: String = "text/gemini; charset=utf-8"
+    ) -> GeminiResponse {
         GeminiResponse(status: .success, meta: mimeType, body: Data(body.utf8))
     }
 
@@ -108,11 +128,15 @@ public extension GeminiResponse {
     }
 
     // 40–44 Temporary Failures
-    static func failure(_ reason: String = "Temporary failure") -> GeminiResponse {
+    static func failure(
+        _ reason: String = "Temporary failure"
+    ) -> GeminiResponse {
         GeminiResponse(status: .temporaryFailure, meta: reason)
     }
 
-    static func serverUnavailable(_ reason: String = "Server unavailable") -> GeminiResponse {
+    static func serverUnavailable(
+        _ reason: String = "Server unavailable"
+    ) -> GeminiResponse {
         GeminiResponse(status: .serverUnavailable, meta: reason)
     }
 
@@ -121,20 +145,46 @@ public extension GeminiResponse {
     }
 
     // 50–59 Permanent Failures
-    static func serverError(_ reason: String = "Server error") -> GeminiResponse {
+    static func serverError(
+        _ reason: String = "Server error"
+    ) -> GeminiResponse {
         GeminiResponse(status: .serverError, meta: reason)
     }
 
-    static func notFound(_ reason: String = "Not found") -> GeminiResponse {
+    static func notFound(
+        _ reason: String = "Not found"
+    ) -> GeminiResponse {
         GeminiResponse(status: .notFound, meta: reason)
     }
 
-    static func gone(_ reason: String = "Gone") -> GeminiResponse {
+    static func gone(
+        _ reason: String = "Gone"
+    ) -> GeminiResponse {
         GeminiResponse(status: .gone, meta: reason)
     }
 
-    static func badRequest(_ reason: String = "Bad request") -> GeminiResponse {
+    static func badRequest(
+        _ reason: String = "Bad request"
+    ) -> GeminiResponse {
         GeminiResponse(status: .badRequest, meta: reason)
     }
-}
 
+    // 60–62 Client Certificate
+    static func certificateRequired(
+        _ reason: String = "Certificate required"
+    ) -> GeminiResponse {
+        GeminiResponse(status: .certificateRequired, meta: reason)
+    }
+
+    static func certificateUnauthorized(
+        _ reason: String = "Certificate not authorised"
+    ) -> GeminiResponse {
+        GeminiResponse(status: .certificateUnauthorized, meta: reason)
+    }
+
+    static func certificateNotValid(
+        _ reason: String = "Certificate not valid"
+    ) -> GeminiResponse {
+        GeminiResponse(status: .certificateNotValid, meta: reason)
+    }
+}
