@@ -88,9 +88,9 @@ public struct Input<Child: Route>: Route {
 
 extension Input: HandlerConvertable {
     var handler: Handler {
-        .input(prompt) { response in
+        .input(prompt, next: NextHandler { response in
             return child(response).handler
-        }
+        })
     }
 }
 @dynamicMemberLookup
@@ -139,9 +139,9 @@ public struct Match<Child: Route>: Route {
 
 extension Match: HandlerConvertable {
     var handler: Handler {
-        return .match(path) { params in
+        return .match(path, next: NextHandler { params in
             child(params).handler
-        }
+        })
     }
 }
 
@@ -190,7 +190,7 @@ public struct SensitiveInput<Child: Route>: Route {
 
 extension SensitiveInput: HandlerConvertable {
     var handler: Handler {
-        .sensitiveInput(prompt) { response in child(response).handler }
+        .sensitiveInput(prompt, next: NextHandler { response in child(response).handler })
     }
 }
 
