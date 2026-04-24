@@ -31,6 +31,16 @@ extension Handler {
         }
     }
 
+    static func sensitiveInput(_ prompt: String, next: @Sendable @escaping (String) -> Handler) -> Handler {
+        return Handler { request in
+            guard let response = request.query else {
+                return .sensitiveInput(prompt)
+            }
+
+            return await next(response).handle(request: request)
+        }
+    }
+
     static func success(_ content: String) -> Handler {
         return Handler { _ in .success(content) }
     }
@@ -97,17 +107,34 @@ public extension GeminiResponse {
         GeminiResponse(status: .redirectPermanent, meta: url)
     }
 
-    // 40–59 Errors
+    // 40–44 Temporary Failures
+    static func failure(_ reason: String = "Temporary failure") -> GeminiResponse {
+        GeminiResponse(status: .temporaryFailure, meta: reason)
+    }
+
+    static func serverUnavailable(_ reason: String = "Server unavailable") -> GeminiResponse {
+        GeminiResponse(status: .serverUnavailable, meta: reason)
+    }
+
+    static func slowDown(seconds: Int) -> GeminiResponse {
+        GeminiResponse(status: .slowDown, meta: "\(seconds)")
+    }
+
+    // 50–59 Permanent Failures
+    static func serverError(_ reason: String = "Server error") -> GeminiResponse {
+        GeminiResponse(status: .serverError, meta: reason)
+    }
+
     static func notFound(_ reason: String = "Not found") -> GeminiResponse {
         GeminiResponse(status: .notFound, meta: reason)
     }
 
-    static func failure(_ reason: String) -> GeminiResponse {
-        GeminiResponse(status: .temporaryFailure, meta: reason)
+    static func gone(_ reason: String = "Gone") -> GeminiResponse {
+        GeminiResponse(status: .gone, meta: reason)
     }
 
     static func badRequest(_ reason: String = "Bad request") -> GeminiResponse {
-        GeminiResponse(status: .serverError, meta: reason)
+        GeminiResponse(status: .badRequest, meta: reason)
     }
 }
 

@@ -164,10 +164,113 @@ public struct Success: Route, HandlerConvertable {
     var content: String
     var handler: Handler { .success(content) }
     public var body: Never { return fatalError() }
-    
+
     public init(_ content: String) {
         self.content = content
     }
+}
+
+public struct SensitiveInput<Child: Route>: Route {
+    public typealias Body = Never
+    public var body: Never { return fatalError() }
+
+    let prompt: String
+    let child: @Sendable (String) -> Child
+
+    public init(
+        _ prompt: String,
+        @RouteBuilder child: @Sendable @escaping (String) -> Child
+    ) {
+        self.prompt = prompt
+        self.child = child
+    }
+}
+
+extension SensitiveInput: HandlerConvertable {
+    var handler: Handler {
+        .sensitiveInput(prompt) { response in child(response).handler }
+    }
+}
+
+public struct Redirect: Route, HandlerConvertable {
+    public typealias Body = Never
+    let url: String
+    var handler: Handler { Handler { _ in .redirect(to: url) } }
+    public var body: Never { return fatalError() }
+
+    public init(to url: String) { self.url = url }
+}
+
+public struct PermanentRedirect: Route, HandlerConvertable {
+    public typealias Body = Never
+    let url: String
+    var handler: Handler { Handler { _ in .permanentRedirect(to: url) } }
+    public var body: Never { return fatalError() }
+
+    public init(to url: String) { self.url = url }
+}
+
+public struct Failure: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .failure(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Temporary failure") { self.reason = reason }
+}
+
+public struct ServerUnavailable: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .serverUnavailable(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Server unavailable") { self.reason = reason }
+}
+
+public struct SlowDown: Route, HandlerConvertable {
+    public typealias Body = Never
+    let seconds: Int
+    var handler: Handler { Handler { _ in .slowDown(seconds: seconds) } }
+    public var body: Never { return fatalError() }
+
+    public init(seconds: Int) { self.seconds = seconds }
+}
+
+public struct ServerError: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .serverError(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Server error") { self.reason = reason }
+}
+
+public struct NotFound: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .notFound(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Not found") { self.reason = reason }
+}
+
+public struct Gone: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .gone(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Gone") { self.reason = reason }
+}
+
+public struct BadRequest: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .badRequest(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Bad request") { self.reason = reason }
 }
 
 extension Path: HandlerConvertable {
