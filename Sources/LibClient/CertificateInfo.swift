@@ -24,4 +24,8 @@ public struct CertificateVerifier: Sendable {
     }
 
     public static let allowAll = CertificateVerifier { _ in .allow }
+
+    public static func tofu(store: TOFUStore = .inMemory) -> CertificateVerifier {
+        CertificateVerifier { info in await store.trust(info) }
+    }
 }

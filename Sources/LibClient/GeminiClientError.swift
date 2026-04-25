@@ -3,4 +3,5 @@ public enum GeminiClientError: Error, Sendable, Equatable {
     case requestTooLong
     case invalidResponse
     case unknownStatus(Int)
+    case tooManyRedirects
 }

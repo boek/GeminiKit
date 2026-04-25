@@ -8,7 +8,7 @@ enum NIOGeminiClient {
     static func fetch(
         url: URL,
         request: String,
-        certificateVerification: CertificateVerifier?
+        certificateVerification: CertificateVerifier
     ) async throws -> GeminiResponse {
         var tlsConfig = TLSConfiguration.makeClientConfiguration()
         tlsConfig.minimumTLSVersion = .tlsv12
@@ -20,32 +20,24 @@ enum NIOGeminiClient {
         let channel = try await ClientBootstrap(group: MultiThreadedEventLoopGroup.singleton)
             .connect(host: host, port: port) { channel in
                 channel.eventLoop.makeCompletedFuture {
-                    let sslHandler: NIOSSLClientHandler
-                    if let verify = certificateVerification {
-                        sslHandler = try NIOSSLClientHandler(
-                            context: sslContext,
-                            serverHostname: host,
-                            customVerificationCallback: { certs, promise in
-                                guard let leaf = certs.first else {
-                                    promise.succeed(.failed)
-                                    return
-                                }
-                                guard let derBytes = try? leaf.toDERBytes() else {
-                                    promise.succeed(.failed)
-                                    return
-                                }
-                                let fingerprint = CertificateFingerprint(derBytes: derBytes)
-                                let notAfter = Date(timeIntervalSince1970: Double(leaf.notValidAfter))
-                                let info = CertificateInfo(host: host, fingerprint: fingerprint, notAfter: notAfter)
-                                Task {
-                                    let trust = await verify(info)
-                                    promise.succeed(trust == .allow ? .certificateVerified : .failed)
-                                }
+                    let sslHandler = try NIOSSLClientHandler(
+                        context: sslContext,
+                        serverHostname: host,
+                        customVerificationCallback: { certs, promise in
+                            guard let leaf = certs.first,
+                                  let derBytes = try? leaf.toDERBytes() else {
+                                promise.succeed(.failed)
+                                return
                             }
-                        )
-                    } else {
-                        sslHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: host)
-                    }
+                            let fingerprint = CertificateFingerprint(derBytes: derBytes)
+                            let notAfter = Date(timeIntervalSince1970: Double(leaf.notValidAfter))
+                            let info = CertificateInfo(host: host, fingerprint: fingerprint, notAfter: notAfter)
+                            Task {
+                                let trust = await certificateVerification(info)
+                                promise.succeed(trust == .allow ? .certificateVerified : .failed)
+                            }
+                        }
+                    )
                     try channel.pipeline.syncOperations.addHandler(sslHandler)
                     return try NIOAsyncChannel<ByteBuffer, ByteBuffer>(wrappingChannelSynchronously: channel)
                 }
