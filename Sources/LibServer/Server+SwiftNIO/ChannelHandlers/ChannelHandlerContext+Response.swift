@@ -12,7 +12,9 @@ extension ChannelHandlerContext {
     func write(response: GeminiResponse, promise: EventLoopPromise<Void>? = nil) {
         var buffer = channel.allocator.buffer(capacity: 256)
 
-        buffer.writeString("\(response.status.rawValue) \(response.meta)\r\n")
+        var meta = response.meta
+        while meta.utf8.count > 1024 { meta.removeLast() }
+        buffer.writeString("\(response.status.rawValue) \(meta)\r\n")
 
         if response.status == .success, let body = response.body {
             let byteBuffer = ByteBufferAllocator().buffer(bytes: body)

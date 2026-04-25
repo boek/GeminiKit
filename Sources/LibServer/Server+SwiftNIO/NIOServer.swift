@@ -24,6 +24,9 @@ struct NIOServer {
             // SO_REUSEADDR lets you restart the server without waiting for the OS to release the port
             .serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
         
+        let (timeoutSecs, timeoutAtto) = config.requestTimeout.components
+        let timeoutAmount = TimeAmount.nanoseconds(timeoutSecs * 1_000_000_000 + timeoutAtto / 1_000_000_000)
+
         let serverChannel = try await bootstrap.bind(host: config.host, port: config.port) { channel in
             channel.eventLoop.makeCompletedFuture {
                 // Accept any client cert without chain verification — Gemini uses fingerprint-based TOFU
@@ -32,8 +35,12 @@ struct NIOServer {
                         promise.succeed(.certificateVerified)
                     })
                 )
+                try channel.pipeline.syncOperations.addHandlers(
+                    IdleStateHandler(readTimeout: timeoutAmount),
+                    RequestTimeoutHandler()
+                )
                 try channel.pipeline.syncOperations.addHandlers(ByteToMessageHandler(GeminiLineDecoder()))
-                try channel.pipeline.syncOperations.addHandlers(GeminiRequestDecoder())
+                try channel.pipeline.syncOperations.addHandlers(GeminiRequestDecoder(hostname: config.host))
                 try channel.pipeline.syncOperations.addHandlers(GeminiResponseEncoder())
                 
                 return try NIOAsyncChannel<GeminiRequest, GeminiResponse>(wrappingChannelSynchronously: channel)

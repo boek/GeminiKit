@@ -17,8 +17,11 @@ final class GeminiRequestDecoder: ChannelInboundHandler, RemovableChannelHandler
 
     private var buffer = ""
     private var clientCertificate: ClientCertificate?
+    private let hostname: String
 
-    public init() {}
+    public init(hostname: String) {
+        self.hostname = hostname
+    }
 
     public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         if clientCertificate == nil,
@@ -42,10 +45,14 @@ final class GeminiRequestDecoder: ChannelInboundHandler, RemovableChannelHandler
         let rawLine = buffer.trimmingCharacters(in: .newlines)
         buffer = ""
 
+        let isWildcard = hostname == "0.0.0.0" || hostname == "::"
         guard
             rawLine.utf8.count <= 1024,
             let url = URL(string: rawLine),
-            url.scheme?.lowercased() == "gemini"
+            url.scheme?.lowercased() == "gemini",
+            url.user == nil,
+            url.password == nil,
+            isWildcard || url.host?.lowercased() == hostname.lowercased()
         else {
             let response = GeminiResponse(status: .badRequest, meta: "Bad request")
             context.write(response: response)

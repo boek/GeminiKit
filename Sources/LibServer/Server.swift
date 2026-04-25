@@ -10,7 +10,7 @@ import Core
 import Foundation
 import NIOCore
 
-public struct Config {
+public struct Config: Sendable {
     public var certificatePath: URL
     public var privateKeyPath: URL
     public var host: String
