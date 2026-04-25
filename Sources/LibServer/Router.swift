@@ -5,6 +5,7 @@
 //  Created by Jeff Boek on 4/9/26.
 //
 
+import Foundation
 import Core
 
 public protocol Route: Sendable {
@@ -200,7 +201,10 @@ public struct Redirect: Route, HandlerConvertable {
     var handler: Handler { Handler { _ in .redirect(to: url) } }
     public var body: Never { return fatalError() }
 
-    public init(to url: String) { self.url = url }
+    public init(to url: String) {
+        precondition(URL(string: url) != nil, "Redirect target is not a valid URL: \(url)")
+        self.url = url
+    }
 }
 
 public struct PermanentRedirect: Route, HandlerConvertable {
@@ -209,7 +213,10 @@ public struct PermanentRedirect: Route, HandlerConvertable {
     var handler: Handler { Handler { _ in .permanentRedirect(to: url) } }
     public var body: Never { return fatalError() }
 
-    public init(to url: String) { self.url = url }
+    public init(to url: String) {
+        precondition(URL(string: url) != nil, "PermanentRedirect target is not a valid URL: \(url)")
+        self.url = url
+    }
 }
 
 public struct Failure: Route, HandlerConvertable {
@@ -228,6 +235,24 @@ public struct ServerUnavailable: Route, HandlerConvertable {
     public var body: Never { return fatalError() }
 
     public init(_ reason: String = "Server unavailable") { self.reason = reason }
+}
+
+public struct CgiError: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .cgiError(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "CGI error") { self.reason = reason }
+}
+
+public struct ProxyError: Route, HandlerConvertable {
+    public typealias Body = Never
+    let reason: String
+    var handler: Handler { Handler { _ in .proxyError(reason) } }
+    public var body: Never { return fatalError() }
+
+    public init(_ reason: String = "Proxy error") { self.reason = reason }
 }
 
 public struct SlowDown: Route, HandlerConvertable {
