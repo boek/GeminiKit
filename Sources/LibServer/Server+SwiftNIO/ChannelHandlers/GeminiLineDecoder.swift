@@ -17,6 +17,9 @@ struct GeminiLineDecoder: ByteToMessageDecoder {
               bytes.index(after: crIdx) < bytes.endIndex,
               bytes[bytes.index(after: crIdx)] == UInt8(ascii: "\n")
         else {
+            if buffer.readableBytes > 1026 {
+                context.close(promise: nil)
+            }
             return .needMoreData   // tell NIO to call us again when more bytes arrive
         }
 

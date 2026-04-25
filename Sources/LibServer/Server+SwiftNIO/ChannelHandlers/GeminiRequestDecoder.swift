@@ -43,11 +43,11 @@ final class GeminiRequestDecoder: ChannelInboundHandler, RemovableChannelHandler
         buffer = ""
 
         guard
-            rawLine.count <= 1024,
+            rawLine.utf8.count <= 1024,
             let url = URL(string: rawLine),
             url.scheme?.lowercased() == "gemini"
         else {
-            let response = GeminiResponse(status: .temporaryFailure, meta: "Bad request")
+            let response = GeminiResponse(status: .badRequest, meta: "Bad request")
             context.write(response: response)
             return
         }

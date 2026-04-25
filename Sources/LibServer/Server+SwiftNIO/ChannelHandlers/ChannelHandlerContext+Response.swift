@@ -14,7 +14,7 @@ extension ChannelHandlerContext {
 
         buffer.writeString("\(response.status.rawValue) \(response.meta)\r\n")
 
-        if let body = response.body {
+        if response.status == .success, let body = response.body {
             let byteBuffer = ByteBufferAllocator().buffer(bytes: body)
             buffer.writeImmutableBuffer(byteBuffer)
         }
