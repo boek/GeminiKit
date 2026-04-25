@@ -66,7 +66,12 @@ public struct GeminiResponse: Sendable {
     public var status: GeminiStatus
     public var meta: String
     public var body: Data?
-    
+
+    public var retryAfter: Int? {
+        guard status == .slowDown else { return nil }
+        return Int(meta)
+    }
+
     public init(status: GeminiStatus, meta: String, body: Data? = nil) {
         self.status = status
         self.meta = meta

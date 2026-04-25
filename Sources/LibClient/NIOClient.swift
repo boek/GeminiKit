@@ -77,6 +77,9 @@ enum NIOGeminiClient {
         }
 
         let meta = headerLine.count > 3 ? String(headerLine.dropFirst(3)) : ""
+        guard meta.utf8.count <= 1024 else {
+            throw GeminiClientError.invalidResponse
+        }
         let bodySlice = data[crlfRange.upperBound...]
 
         return GeminiResponse(
