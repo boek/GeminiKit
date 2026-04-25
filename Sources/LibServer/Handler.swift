@@ -140,6 +140,18 @@ public extension GeminiResponse {
         GeminiResponse(status: .serverUnavailable, meta: reason)
     }
 
+    static func cgiError(
+        _ reason: String = "CGI error"
+    ) -> GeminiResponse {
+        GeminiResponse(status: .cgiError, meta: reason)
+    }
+
+    static func proxyError(
+        _ reason: String = "Proxy error"
+    ) -> GeminiResponse {
+        GeminiResponse(status: .proxyError, meta: reason)
+    }
+
     static func slowDown(seconds: Int) -> GeminiResponse {
         GeminiResponse(status: .slowDown, meta: "\(seconds)")
     }

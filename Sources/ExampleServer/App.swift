@@ -10,6 +10,8 @@ private let indexPage = """
     => /test/permanent-redirect 31 Permanent Redirect
     => /test/temporary-failure  40 Temporary Failure
     => /test/server-unavailable 41 Server Unavailable
+    => /test/cgi-error          42 CGI Error
+    => /test/proxy-error        43 Proxy Error
     => /test/slow-down          44 Slow Down (60s)
     => /test/server-error       50 Server Error
     => /test/not-found          51 Not Found
@@ -63,6 +65,12 @@ struct ExampleServer: Server {
         }
         Path("/test/server-unavailable") {
             ServerUnavailable()
+        }
+        Path("/test/cgi-error") {
+            CgiError()
+        }
+        Path("/test/proxy-error") {
+            ProxyError()
         }
         Path("/test/slow-down") {
             SlowDown(seconds: 60)
