@@ -47,6 +47,19 @@ public enum GeminiStatus: Int, Sendable {
     case certificateRequired     = 60
     case certificateUnauthorized = 61
     case certificateNotValid     = 62
+
+    public init?(classBased code: Int) {
+        if let known = GeminiStatus(rawValue: code) { self = known; return }
+        switch code / 10 {
+        case 1: self = .input
+        case 2: self = .success
+        case 3: self = .redirect
+        case 4: self = .temporaryFailure
+        case 5: self = .serverError
+        case 6: self = .certificateRequired
+        default: return nil
+        }
+    }
 }
 
 public struct GeminiResponse: Sendable {

@@ -72,7 +72,7 @@ enum NIOGeminiClient {
             throw GeminiClientError.invalidResponse
         }
 
-        guard let status = GeminiStatus(rawValue: statusCode) else {
+        guard let status = GeminiStatus(classBased: statusCode) else {
             throw GeminiClientError.unknownStatus(statusCode)
         }
 
@@ -82,7 +82,7 @@ enum NIOGeminiClient {
         return GeminiResponse(
             status: status,
             meta: meta,
-            body: bodySlice.isEmpty ? nil : Data(bodySlice)
+            body: statusCode / 10 == 2 ? (bodySlice.isEmpty ? nil : Data(bodySlice)) : nil
         )
     }
 }

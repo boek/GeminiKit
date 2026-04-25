@@ -11,7 +11,9 @@ public struct GeminiClient: Sendable {
     public func fetch(_ url: URL) async throws -> GeminiResponse {
         var current = url
         for _ in 0..<5 {
-            guard current.scheme == "gemini", let host = current.host, !host.isEmpty else {
+            guard current.scheme == "gemini",
+                  let host = current.host, !host.isEmpty,
+                  current.user == nil, current.password == nil else {
                 throw GeminiClientError.invalidURL
             }
             let requestString = current.absoluteString + "\r\n"
